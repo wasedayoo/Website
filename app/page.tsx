@@ -3,82 +3,57 @@
 import { useState } from "react";
 import "./globals.css";
 
-interface Circle {
-  id: number;
-  x: number; // 横位置 (%)
-  y: number; // 縦位置 (%)
-}
+export default function HoroscopeApp() {
+  const [birthDate, setBirthDate] = useState<string>(""); // 生年月日
+  const [gifUrl, setGifUrl] = useState<string | null>(null); // 表示するGIFのURL
 
-export default function Home() {
-  const [circles, setCircles] = useState<Circle[]>(() =>
-    Array.from({ length: 6 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 80 + 10, // 10% ~ 90% の範囲で配置
-      y: Math.random() * 80 + 10, // 10% ~ 90% の範囲で配置
-    }))
-  );
+  // 占い結果に基づくGIFを取得する関数
+  const getGifForDate = (date: string): string => {
+    const month = new Date(date).getMonth() + 1;
+    const day = new Date(date).getDate();
 
-  const [draggingCircle, setDraggingCircle] = useState<number | null>(null); // ドラッグ中の丸の ID
-  const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 }); // ドラッグ開始時のオフセット
-
-  const handleMouseDown = (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
-    id: number
-  ) => {
-    // ドラッグ開始
-    const circle = circles.find((c) => c.id === id);
-    if (!circle) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    setOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-    setDraggingCircle(id);
+    // 簡易的な占い（星座ベースの例）
+    if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) {
+      return "https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif"; // おひつじ座
+    } else if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) {
+      return "https://media.giphy.com/media/l41lOQOD28v9fT20c/giphy.gif"; // おうし座
+    }
+    // 他の星座も同様に追加...
+    return "https://media.giphy.com/media/3o6Zt481isNVuQI1l6/giphy.gif"; // デフォルト
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    if (draggingCircle === null) return;
-
-    // 画面サイズに対するドラッグ位置の計算
-    const { clientX, clientY } = e;
-    const { innerWidth, innerHeight } = window;
-    const newX = ((clientX - offset.x) / innerWidth) * 100;
-    const newY = ((clientY - offset.y) / innerHeight) * 100;
-
-    // 対象の丸の位置を更新
-    setCircles((prevCircles) =>
-      prevCircles.map((circle) =>
-        circle.id === draggingCircle
-          ? { ...circle, x: Math.min(Math.max(newX, 0), 100), y: Math.min(Math.max(newY, 0), 100) }
-          : circle
-      )
-    );
-  };
-
-  const handleMouseUp = () => {
-    // ドラッグ終了
-    setDraggingCircle(null);
+  const handleSubmit = () => {
+    if (birthDate) {
+      const gif = getGifForDate(birthDate);
+      setGifUrl(gif);
+    } else {
+      alert("生年月日を入力してください！");
+    }
   };
 
   return (
-    <div
-      className="relative min-h-screen bg-black overflow-hidden"
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-    >
-      {circles.map((circle) => (
-        <div
-          key={circle.id}
-          className="circle"
-          style={{
-            left: `${circle.x}%`,
-            top: `${circle.y}%`,
-          }}
-          onMouseDown={(e) => handleMouseDown(e, circle.id)}
-        />
-      ))}
-      <h1 className="text-white text-center mt-10">丸を掴んで動かしてみてください！</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
+      <h1 className="text-3xl font-bold mb-6">あなたの運勢を占おう！</h1>
+
+      <input
+        type="date"
+        value={birthDate}
+        onChange={(e) => setBirthDate(e.target.value)}
+        className="mb-4 px-4 py-2 text-black rounded"
+      />
+      <button
+        onClick={handleSubmit}
+        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+      >
+        占う！
+      </button>
+
+      {gifUrl && (
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-4">占い結果:</h2>
+          <img src={gifUrl} alt="占い結果のGIF" className="w-64 h-64" />
+        </div>
+      )}
     </div>
   );
 }
